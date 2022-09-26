@@ -89,10 +89,60 @@ public class BillingerService : Billing.BillingBase
     }
     public override Task<Coin> LongestHistoryCoin(None request, ServerCallContext context)
     {
-        return base.LongestHistoryCoin(request, context);
+        var coin = ListOfCoins.GetACoinWithTheLongestHistory();
+        var response = new Coin
+        {
+            Id = coin.Id,
+            History = coin.History
+        };
+        return Task.FromResult(response);
     }
     public override Task<Response> MoveCoins(MoveCoinsTransaction request, ServerCallContext context)
     {
-        return base.MoveCoins(request, context);
+        string source = request.SrcUser;
+        string destination = request.DstUser;
+        long coinsAmount = request.Amount;
+
+        var users = ListOfUsers.GetAll();
+        var coins = ListOfCoins.GetAll();
+
+        UserModel? srcUser = users.Where(x => x.Name == source).FirstOrDefault();
+        UserModel? dstUser = users.Where(x => x.Name == destination).FirstOrDefault();
+
+        if (srcUser == null || dstUser == null)
+        {
+            var responseFailed = new Response
+            {
+                Status = Response.Types.Status.Failed,
+                Comment = "There are no such users."
+            };
+            return Task.FromResult(responseFailed);
+        }
+
+        if (srcUser.Amount < coinsAmount)
+        {
+            var responseFailed = new Response
+            {
+                Status = Response.Types.Status.Failed,
+                Comment = "Source user doesn't have enough coins."
+            };
+            return Task.FromResult(responseFailed);
+        }
+
+        var userCoins = coins.Where(x => x.CurrentUser == srcUser.Name).Take((int)coinsAmount);
+        foreach (var coin in userCoins)
+        {
+            ListOfCoins.UpdateCoinHistory(coin, dstUser.Name);
+        }
+
+        ListOfUsers.ChangeCoinsAmount(srcUser, coinsAmount, false);
+        ListOfUsers.ChangeCoinsAmount(dstUser, coinsAmount, true);
+
+        var successResponse = new Response
+        {
+            Status = Response.Types.Status.Ok,
+            Comment = $"Coins were successfully moved from {srcUser.Name} to {dstUser.Name}"
+        };
+        return Task.FromResult(successResponse);
     }
 }

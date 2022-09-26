@@ -7,8 +7,14 @@ public class CoinModel
     public CoinModel(int id, string destination)
     {
         Id = id;
-        History = $"From emission to {destination}\\n";
+        History = $"From emission to {destination}.";
         CurrentUser = destination;
         HistoryCounter = 1;
+    }
+    public void UpdateHistory(string destination)
+    {
+        History += $" From {CurrentUser} to {destination}.";
+        HistoryCounter++;
+        CurrentUser = destination;
     }
 }
