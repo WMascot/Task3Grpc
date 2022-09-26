@@ -9,7 +9,7 @@ grpcurl -import-path $PROTODIR -proto billing.proto -plaintext -d \
 
 echo "Emission 10 coins."
 grpcurl -import-path $PROTODIR -proto billing.proto -plaintext -d \
-'{"amount": "10"}' $GRPCSERVER billing.Billing/CoinsEmission
+'{"amount": "111111"}' $GRPCSERVER billing.Billing/CoinsEmission
 
 echo "List users. After the emission."
 grpcurl -import-path $PROTODIR -proto billing.proto -plaintext -d \

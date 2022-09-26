@@ -29,4 +29,3 @@
 /home/danila/Task3Grpc/obj/Debug/net6.0/ref/Task3Grpc.dll
 /home/danila/Task3Grpc/bin/Debug/net6.0/Grpc.AspNetCore.Server.Reflection.dll
 /home/danila/Task3Grpc/bin/Debug/net6.0/Grpc.Reflection.dll
-/home/danila/Task3Grpc/bin/Debug/net6.0/usersData.json

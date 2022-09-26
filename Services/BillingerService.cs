@@ -33,8 +33,11 @@ public class BillingerService : Billing.BillingBase
 
         foreach(UserModel user in users)
         {
+            CoinModel coin = new(ListOfCoins.GetAll().Count() + 1, user.Name);
+            ListOfCoins.AddCoin(coin);
             ListOfUsers.ChangeCoinsAmount(user, 1, true);
         }
+
         var response = new Response
         {
             Status = Response.Types.Status.Ok,
@@ -49,13 +52,30 @@ public class BillingerService : Billing.BillingBase
             if (emissionedCoins < coinsAmount)
             {
                 double ratingCoef = user.Rating / (double)totalRating;
-                double ratingCoefRounded = Math.Round(ratingCoef, 1);
-                double emissionCoins = ratingCoefRounded * coinsAmount;
+                double emissionCoins = ratingCoef * coinsAmount;
                 long emissionCoinsRounded = (long)Math.Round(emissionCoins);
+
+                for (int i = 0; i < emissionCoinsRounded; i++)
+                {
+                    CoinModel coin = new(ListOfCoins.GetAll().Count() + 1, user.Name);
+                    ListOfCoins.AddCoin(coin);
+                }
 
                 emissionedCoins += emissionCoinsRounded;
                 ListOfUsers.ChangeCoinsAmount(user, emissionCoinsRounded, true);
             } else break;
+        }
+
+        coinsAmount -= emissionedCoins;
+        if (coinsAmount > 0)
+        {
+            var user = users.OrderByDescending(x => x.Rating).First();
+            ListOfUsers.ChangeCoinsAmount(user, coinsAmount, true);
+            for (int i = 0; i < coinsAmount; i++)
+            {
+                CoinModel coin = new(ListOfCoins.GetAll().Count() + 1, user.Name);
+                ListOfCoins.AddCoin(coin);
+            }
         }
         return Task.FromResult(response);
     }

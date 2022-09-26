@@ -11,11 +11,15 @@ public class CoinsRepository : ICoinsRepository
     }
     public void AddCoin(CoinModel coin)
     {
-        throw new NotImplementedException();
+        _coins.Add(coin);
     }
-
+    public void UpdateCoinHistory(CoinModel coin, string destination)
+    {
+        _coins.Where(x => x == coin).First().UpdateHistory(destination);
+    }
     public CoinModel GetACoinWithTheLongestHistory()
     {
-        throw new NotImplementedException();
+        var coin = _coins.OrderByDescending(x => x.HistoryCounter).First();
+        return coin;
     }
 }
