@@ -5,22 +5,20 @@ namespace Task3Grpc.Services;
 
 public class BillingerService : Billing.BillingBase
 {
-    public List<UserModel> ListOfUsers { get; set; }
-    public List<CoinModel> ListOfCoins { get; set; }
-    private readonly ILogger<GreeterService> _logger;
-    public BillingerService(ILogger<GreeterService> logger)
+    private IUsersRepository ListOfUsers;
+    private ICoinsRepository ListOfCoins;
+    private readonly ILogger<BillingerService> _logger;
+    public BillingerService(ILogger<BillingerService> logger, IUsersRepository listOfUsers, ICoinsRepository listOfCoins)
     {
         _logger = logger;
-        ListOfCoins = new();
-        ListOfUsers = new();
-        ListOfUsers.Add(new UserModel("boris", 5000));
-        ListOfUsers.Add(new UserModel("maria", 1000));
-        ListOfUsers.Add(new UserModel("oleg", 800));
+        ListOfCoins = listOfCoins;
+        ListOfUsers = listOfUsers;
     }
     public override Task<Response> CoinsEmission(EmissionAmount request, ServerCallContext context)
     {
-        long totalRating = ListOfUsers.Sum(x => x.Rating);
-        long usersAmount = ListOfUsers.Count();
+        var users = ListOfUsers.GetAll();
+        long totalRating = users.Sum(x => x.Rating);
+        long usersAmount = users.Count();
         long coinsAmount = request.Amount;
 
         if (usersAmount > coinsAmount)
@@ -33,11 +31,9 @@ public class BillingerService : Billing.BillingBase
             return Task.FromResult(responseFailed);
         }
 
-        for (int i = 0; i < usersAmount; i++)
+        foreach(UserModel user in users)
         {
-            CoinModel newCoin = new(ListOfCoins.Count() + 1, ListOfUsers[i].Name);
-            ListOfCoins.Add(newCoin);
-            ListOfUsers[i].Amount++;
+            ListOfUsers.ChangeCoinsAmount(user, 1, true);
         }
         var response = new Response
         {
@@ -47,31 +43,25 @@ public class BillingerService : Billing.BillingBase
         if (usersAmount == coinsAmount) return Task.FromResult(response);
 
         coinsAmount -= usersAmount;
-        for (int i = 0; i < usersAmount; i++)
+        long emissionedCoins = 0;
+        foreach(var user in users)
         {
-            if (coinsAmount > 0)
+            if (emissionedCoins < coinsAmount)
             {
-                double ratingCoef = ListOfUsers[i].Rating / totalRating;
+                double ratingCoef = user.Rating / (double)totalRating;
                 double ratingCoefRounded = Math.Round(ratingCoef, 1);
                 double emissionCoins = ratingCoefRounded * coinsAmount;
-                int emissionCoinsRounded = (int)Math.Round(emissionCoins);
+                long emissionCoinsRounded = (long)Math.Round(emissionCoins);
 
-                coinsAmount -= emissionCoinsRounded;
-
-                for (int y = 0; i < emissionCoinsRounded; y++)
-                {
-                    CoinModel newCoin = new(ListOfCoins.Count() + 1, ListOfUsers[i].Name);
-                    ListOfCoins.Add(newCoin);
-                }
-
-                ListOfUsers[i].Amount += emissionCoinsRounded;
+                emissionedCoins += emissionCoinsRounded;
+                ListOfUsers.ChangeCoinsAmount(user, emissionCoinsRounded, true);
             } else break;
         }
         return Task.FromResult(response);
     }
     public override async Task ListUsers(None request, IServerStreamWriter<UserProfile> responseStream, ServerCallContext context)
     {
-        foreach(var user in ListOfUsers)
+        foreach(var user in ListOfUsers.GetAll())
         {
             await responseStream.WriteAsync(new UserProfile{Name = user.Name, Amount = user.Amount});
             await Task.Delay(TimeSpan.FromSeconds(1), context.CancellationToken);

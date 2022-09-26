@@ -1,9 +1,9 @@
 public class UserModel
 {
     public string Name { get; set; }
-    public int Rating { get; set; }
-    public int Amount { get; set; }
-    public UserModel(string name, int rating)
+    public long Rating { get; set; }
+    public long Amount { get; set; }
+    public UserModel(string name, long rating)
     {
         Name = name;
         Rating = rating;
