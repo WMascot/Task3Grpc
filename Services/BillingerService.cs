@@ -31,7 +31,7 @@ public class BillingerService : Billing.BillingBase
             return Task.FromResult(responseFailed);
         }
 
-        foreach(UserModel user in users)
+        foreach (UserModel user in users)
         {
             CoinModel coin = new(ListOfCoins.GetAll().Count() + 1, user.Name);
             ListOfCoins.AddCoin(coin);
